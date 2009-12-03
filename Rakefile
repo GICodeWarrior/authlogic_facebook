@@ -5,9 +5,9 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "authlogic_facebook"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
-    gem.email = "rusty@heyzap.com"
+    gem.summary = %Q{Authlogic plugin to support Facebook without Facebooker}
+    gem.description = %Q{Authlogic plugin to support Facebook without Facebooker}
+    gem.email = "GICodeWarrior@gmail.com"
     gem.homepage = "http://github.com/GICodeWarrior/authlogic_facebook"
     gem.authors = ["Rusty Burchfield"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
