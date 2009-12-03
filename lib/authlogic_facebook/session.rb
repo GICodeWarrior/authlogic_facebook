@@ -28,7 +28,7 @@ module AuthlogicFacebook
       #
       # * <tt>Default:</tt> nil
       # * <tt>Accepts:</tt> String
-      def facebook_api_key(value=nil)
+      def facebook_secret_key(value=nil)
         rw_config(:facebook_secret_key, value, nil)
       end
       alias_method :facebook_secret_key=, :facebook_secret_key
@@ -74,6 +74,14 @@ module AuthlogicFacebook
       def save(&block)
         block = nil if !self.facebook_callback?
         super(&block)
+      end
+
+      def facebook_api_key
+        self.class.facebook_api_key
+      end
+
+      def facebook_secret_key
+        self.class.facebook_secret_key
       end
 
       protected
@@ -138,14 +146,6 @@ module AuthlogicFacebook
 
       def facebook_callback?
         !controller.params['fb_sig'].blank?
-      end
-
-      def facebook_api_key
-        self.class.facebook_api_key
-      end
-
-      def facebook_secret_key
-        self.class.facebook_secret_key
       end
 
       def facebook_permissions
