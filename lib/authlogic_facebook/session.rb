@@ -1,8 +1,5 @@
 module AuthlogicFacebook
   module Session
-    class InvalidSignature < StandardError; end
-    class SignatureExpired < StandardError; end
-
     def self.included(klass)
       klass.class_eval do
         extend Config
@@ -85,18 +82,17 @@ module AuthlogicFacebook
 
       private
       def validate_by_facebook
-        debugger
         if facebook_callback?
-          facebook_uid = verified_facebook_params[:user]
+          facebook_uid = facebook_session['uid']
           self.attempted_record = klass.first(:conditions => {facebook_uid_field => facebook_uid})
 
-          if self.attempted_record || !auto_register?
+          if self.attempted_record || !facebook_auto_register?
             return !!self.attempted_record
           else
             self.attempted_record = klass.new
             self.attempted_record.send(:"#{facebook_uid_field}=", facebook_uid)
             if self.attempted_record.respond_to?(:before_connect)
-              self.attempted_record.before_connect(verified_facebook_params)
+              self.attempted_record.send(:before_connect, facebook_session)
             end
 
             return self.attempted_record.save
@@ -107,23 +103,15 @@ module AuthlogicFacebook
         end
       end
 
-      def verified_facebook_params
-        return @verified_facebook_params if defined?(@verified_facebook_params)
+      def facebook_session
+        return @facebook_session if defined?(@facebook_session)
+        session_key = unverified_facebook_params['session_key']
+        params = {'session_key' => session_key, 'format' => 'JSON'}
+        uid = MiniFB.call(self.class.facebook_api_key,
+                          self.class.facebook_secret_key,
+                          'Users.getLoggedInUser', params)
 
-        raw_string = ''
-        unverified_facebook_params.each_pair do |key, value|
-          raw_string << "#{key}=#{value}" if key != 'sig'
-        end.sort.join
-        raw_string << self.class.facebook_secret_key
-        signature = Digest::MD5.hexdigest(raw_string)
-
-        if signature != unverified_facebook_params['sig']
-          raise AuthlogicFacebook::Session::InvalidSignature
-        elsif Time.at(unverified_facebook_params['expires'].to_i) < Time.now
-          raise AuthlogicFacebook::Session::SignatureExpired
-        end
-
-        @verified_facebook_params = unverified_facebook_params
+        @facebook_session = {'uid' => uid, 'session_key' => session_key}
       end
 
       def unverified_facebook_params
@@ -140,12 +128,12 @@ module AuthlogicFacebook
         @unverified_facebook_params = params.is_a?(Hash) ? params : {}
       end
 
-      def auto_register?
-        self.class.facebook_auto_register_value
+      def facebook_auto_register?
+        self.class.facebook_auto_register
       end
 
       def facebook_callback?
-        !unverified_facebook_params['sig'].blank?
+        !unverified_facebook_params['uid'].blank?
       end
 
       def facebook_uid_field
