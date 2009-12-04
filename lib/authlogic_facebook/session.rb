@@ -95,7 +95,7 @@ module AuthlogicFacebook
               self.attempted_record.send(:before_connect, facebook_session)
             end
 
-            return self.attempted_record.save
+            return self.attempted_record.save(false)
           end
         else
           controller.redirect_to(facebook_login_url)

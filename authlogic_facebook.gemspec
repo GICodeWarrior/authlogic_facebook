@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
      "README.rdoc",
      "Rakefile",
      "VERSION",
+     "authlogic_facebook.gemspec",
      "lib/authlogic_facebook.rb",
      "lib/authlogic_facebook/acts_as_authentic.rb",
      "lib/authlogic_facebook/helper.rb",
