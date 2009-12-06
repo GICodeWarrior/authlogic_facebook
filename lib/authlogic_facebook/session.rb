@@ -69,7 +69,7 @@ module AuthlogicFacebook
       # Clears out the block if we are authenticating with Facebook so that we
       # can redirect without a DoubleRender error.
       def save(&block)
-        block = nil if !facebook_callback?
+        block = nil if redirecting_to_facebook?
         super(&block)
       end
 
@@ -134,6 +134,10 @@ module AuthlogicFacebook
 
       def facebook_callback?
         !unverified_facebook_params['uid'].blank?
+      end
+
+      def redirecting_to_facebook?
+        authenticating_with_facebook? && !facebook_callback?
       end
 
       def facebook_uid_field
