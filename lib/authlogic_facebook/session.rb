@@ -107,10 +107,23 @@ module AuthlogicFacebook
       def facebook_session
         return @facebook_session if defined?(@facebook_session)
         session_key = unverified_facebook_params['session_key']
-        params = {'session_key' => session_key, 'format' => 'JSON'}
-        uid = MiniFB.call(self.class.facebook_api_key,
-                          self.class.facebook_secret_key,
-                          'Users.getLoggedInUser', params)
+
+        uid = nil
+        10.times do
+          params = {'session_key' => session_key, 'format' => 'JSON'}
+          begin
+            uid = MiniFB.call(self.class.facebook_api_key,
+                              self.class.facebook_secret_key,
+                              'Users.getLoggedInUser', params)
+            break
+          rescue Errno::ECONNRESET
+            # Try again
+          end
+        end
+
+        if !uid
+          raise 'Unable to reach Facebook after 10 tries.'
+        end
 
         @facebook_session = {'uid' => uid, 'session_key' => session_key}
       end
