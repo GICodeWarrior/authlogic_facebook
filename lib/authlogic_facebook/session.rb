@@ -81,6 +81,10 @@ module AuthlogicFacebook
           !self.class.facebook_secret_key.blank?
       end
 
+      def redirect_to_facebook
+        controller.redirect_to(facebook_login_url)
+      end
+
       private
       def validate_by_facebook
         if facebook_callback?
@@ -99,7 +103,7 @@ module AuthlogicFacebook
             return self.attempted_record.save(false)
           end
         else
-          controller.redirect_to(facebook_login_url)
+          redirect_to_facebook
           return false
         end
       end
@@ -116,13 +120,13 @@ module AuthlogicFacebook
                               self.class.facebook_secret_key,
                               'Users.getLoggedInUser', params)
             break
-          rescue Errno::ECONNRESET
-            # Try again
+          rescue Errno::ECONNRESET, EOFError => e
+            exception = e
           end
         end
 
         if !uid
-          raise 'Unable to reach Facebook after 10 tries.'
+          raise exception
         end
 
         @facebook_session = {'uid' => uid, 'session_key' => session_key}
@@ -158,17 +162,22 @@ module AuthlogicFacebook
         self.class.facebook_uid_field
       end
 
-      def facebook_login_url
-        params = {'api_key' => self.class.facebook_api_key,
-                  'req_perms' => self.class.facebook_permissions.join(','),
-                  'next' => controller.request.url,
-                  'v' => '1.0',
-                  'connect_display' => 'popup',
-                  'fbconnect' => 'true',
-                  'return_session' => 'true'}
+      def facebook_login_params
+        {'api_key' => self.class.facebook_api_key,
+         'req_perms' => self.class.facebook_permissions.join(','),
+         'next' => controller.request.url,
+         'v' => '1.0',
+         'connect_display' => 'popup',
+         'fbconnect' => 'true',
+         'return_session' => 'true'}
+      end
 
-        url = 'http://www.facebook.com/login.php?'
-        url << params.map{|k,v| "#{k}=#{CGI.escape(v)}"}.join('&')
+      def facebook_login_url
+        params = facebook_login_params.map do |key, value|
+          "#{CGI.escape(key)}=#{CGI.escape(value)}"
+        end
+
+        "http://www.facebook.com/login.php?#{params.join('&')}"
       end
     end
   end
