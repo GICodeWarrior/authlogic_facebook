@@ -114,13 +114,13 @@ module AuthlogicFacebook
 
         uid = nil
         10.times do
-          params = {'session_key' => session_key, 'format' => 'JSON'}
+          params = {'session_key' => session_key}
           begin
             uid = MiniFB.call(self.class.facebook_api_key,
                               self.class.facebook_secret_key,
                               'Users.getLoggedInUser', params)
             break
-          rescue Errno::ECONNRESET, EOFError => e
+          rescue Errno::ECONNRESET, EOFError, Timeout::Error => e
             exception = e
           end
         end
