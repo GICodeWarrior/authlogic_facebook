@@ -39,6 +39,15 @@ module AuthlogicFacebook
       end
       alias_method :facebook_uid_field=, :facebook_uid_field
 
+      # What method should be used to find the facebook account?
+      #
+      # * <tt>Default:</tt> :find_by_#{facebook_uid_field}
+      # * <tt>Accepts:</tt> Symbol or String
+      def facebook_finder(value=nil)
+        rw_config(:facebook_finder, value, nil)
+      end
+      alias_method :facebook_finder=, :facebook_finder
+
       # What extended permissions should be requested from the user?
       #
       # * <tt>Default:</tt> []
@@ -89,7 +98,7 @@ module AuthlogicFacebook
       def validate_by_facebook
         if facebook_callback?
           facebook_uid = facebook_session['uid']
-          self.attempted_record = klass.first(:conditions => {facebook_uid_field => facebook_uid})
+          self.attempted_record = klass.send(facebook_finder, facebook_uid)
 
           if self.attempted_record || !facebook_auto_register?
             return !!self.attempted_record
@@ -160,6 +169,10 @@ module AuthlogicFacebook
 
       def facebook_uid_field
         self.class.facebook_uid_field
+      end
+
+      def facebook_finder
+        self.class.facebook_finder || "find_by_#{facebook_uid_field}"
       end
 
       def facebook_login_params
