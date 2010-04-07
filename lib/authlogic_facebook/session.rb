@@ -138,6 +138,8 @@ module AuthlogicFacebook
           raise exception
         end
 
+        # Facebook returns quotes on /occasion/ (uh, wtf?)
+        uid = uid.strip.sub(/^"(\d+)"$/, '\1')
         @facebook_session = {'uid' => uid, 'session_key' => session_key}
       end
 
